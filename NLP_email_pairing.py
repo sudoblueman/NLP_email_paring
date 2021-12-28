@@ -145,6 +145,153 @@ index_pic= sorted(index_pic,reverse=True)
                 #比對新檔，存 key
                 #if str(i).split(".")[0] not in index:
                     #all[(str(i).split(".")[0])] = json.loads(f.read()) 
+from cnsenti import Emotion
+from cnsenti import Sentiment
+import json
+import re
+import jieba
+import spacy
+from opencc import OpenCC
+import sys
+from os import path
+import time
+
+#email 套件
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+from email.mime.image import MIMEImage
+from pathlib import Path
+
+import smtplib
+
+
+from string import Template
+
+
+#if __name__ == "__main__":
+
+
+def send_match_email(match_email_send,username,matcher_mail_2,username_2,text_in_a,text_in_b,sim,pic_a,pic_b):
+
+    #template = Template(Path('/success_template.html').read_text())
+    #body = template.substitute({ 
+        #"user": username,
+        #"user_2":username_2,
+        #"send_to_matched_email":matcher_mail_2
+    
+    #})
+
+    content = MIMEMultipart('alternative')  #建立MIMEMultipart物件
+    content["subject"] = "一網情深 click and love"  #郵件標題
+    content["from"] = "j3183ster@gmail.com"  #寄件者
+    content["to"] = match_email_send  #收件者
+    #content.attach(MIMEText(body, "html"))  # HTML郵件內容
+    content.attach(MIMEText("恭喜 【 "+str(username)+ " 】 配對成功 !!! 您的配對對象是 【 "  + str(username_2) +" 】 ，配對分數達到 "+ str(round(sim*100,1))+" 分!!!" +" \n歡迎進一步email到他/她的信箱 "+str(matcher_mail_2)+" 做聯繫喔\n\n"+"="*10+"以下是對方的自我介紹"+"="*10+"\n\n"+text_in_b))  #郵件內容
+    
+    
+    #content.attach(MIMEImage(Path("/home/tibamelala/ai_project_web/uploadPHP/savepath/"+str(pic_b)+".png").read_bytes()))  # 郵件圖片內容
+  
+    
+    #print("/home/tibamelala/ai_project_web/uploadPHP/savepath/"+pic_b+".png")
+
+    #更換測試圖片  
+    attachment="/home/tibamelala/ai_project_web/uploadPHP/savepath/"+pic_b+".png"
+    #attachment="/home/tibamelala/ai_project_web/tibame_group_project-main/NLP/test_NLP.png"
+
+    part = MIMEImage(open(attachment, 'rb').read())
+    content.attach(part)
+
+
+
+
+    with smtplib.SMTP(host="smtp.gmail.com", port="587") as smtp:  # 設定SMTP伺服器
+        try:
+            smtp.ehlo()  # 驗證SMTP伺服器
+            smtp.starttls()  # 建立加密傳輸
+            smtp.login("j3183ster@gmail.com", "lcrtpaxiwqhiqnkv")  # 登入寄件者gmail
+            smtp.send_message(content)  # 寄送郵件
+            print("已寄出Complete!")
+        except Exception as e:
+            print("Error message: ", e)
+
+#def pri_send_match_email(match_email_send,username,matcher_mail_2,username_2,text_in_a,text_in_b,sim):
+    #print("恭喜 [ "+str(username)+ " [ 配對成功 !!! 您的配對對象是 [ "  + str(username_2) +" ] ，配對分數達到 "+ str(round(sim*100,1))+" 分!!!" +" \n歡迎進一步email到他/她的信箱 "+str(matcher_mail_2)+" 做聯繫喔\n\n"+"="*10+"以下是對方的自我介紹"+"="*10+"\n\n"+text_in_b)) 
+
+
+#input 路徑 "/home/tibamelala/ai_project_web/uploadPHP/NLP_input_ready_for_test/"
+
+#file_path = path.relpath("/home/tibamelala/ai_project_web/uploadPHP/NLP_input_ready_for_test/20211224100411.json")
+#with open(file_path) as f:
+    #print("open 成功")
+
+all={}
+index=[]
+index_pic=[]
+import os
+
+#比較整齊是統一輸出在一個資料夾
+#Path = "/home/tibamelala/ai_project_web/uploadPHP/NLP_input_ready/"
+
+Path = "/home/tibamelala/ai_project_web/uploadPHP/"
+filelist = os.listdir(Path)
+for i in filelist:
+    if i.endswith(".json"):  # You could also add "and i.startswith('f')
+        with open(Path + i, 'r') as f:
+            all[(str(i).split(".")[0])] = json.loads(f.read()) 
+            #print(str(i)+"存檔成功") 
+            #存 key
+            index.append(str(i).split(".")[0])      
+            #for line in f:
+                # Here you can check (with regex, if, or whatever if the keyword is in the document.)
+#存成大字典                
+#print(all)  
+
+
+#json 排序，最新到最舊
+index= sorted(index,reverse=True)
+#print(index)              
+
+
+
+#抓圖片目錄
+
+Path_pic="/home/tibamelala/ai_project_web/uploadPHP/savepath/"
+filelist_pic = os.listdir(Path_pic)
+for i in filelist_pic:
+    if i.endswith(".png"):  # You could also add "and i.startswith('f')
+        with open(Path_pic + i, 'r') as f:
+            #print(str(i)+"圖片目錄讀取成功") 
+            #存 key
+            index_pic.append(str(i).split(".")[0])      
+
+#pic 排序，最新到最舊
+index_pic= sorted(index_pic,reverse=True)
+#print(index_pic) 
+
+
+
+#確定是否偶數個檔案排序跟判斷偶數
+
+#count=3
+#while len(index)%2!=0:
+
+    #print("還沒偶數個")
+    #print("配對中，正等待另外一個人完成送出，請稍後......") 
+    #time.sleep(10)
+
+
+
+
+    #重新抓一次
+    #Path = "/home/tibamelala/ai_project_web/uploadPHP/"
+    #filelist = os.listdir(Path)    
+    #for i in filelist:
+        #if i.endswith(".json"):  # You could also add "and i.startswith('f')
+            #with open(Path + i, 'r') as f:
+                #比對新檔，存 key
+                #if str(i).split(".")[0] not in index:
+                    #all[(str(i).split(".")[0])] = json.loads(f.read()) 
                     #print(str(i)+"存檔成功") 
                 #比對新檔，存 目錄
                 #if str(i).split(".")[0] not in index:
@@ -263,7 +410,7 @@ def w2np(test_text,numf):
       #print("情緒分析json 成功")
 
 #相似度分析
-def sim(a,b,comb):
+def sim(a,a_nick,a_email,b,b_nick,b_email,comb):
     def process(content):
 
       #要刪除的標點符號
@@ -277,8 +424,16 @@ def sim(a,b,comb):
 
 
     s_dict = {
+        "person_a_nickname":a_nick,#第一個人暱稱
         "person_a_sentense": a,#第一個人文句
+        "person_a_email": a_email,#第一個人信箱
+        "person_a_senti_pos":"N/A",#第一個人正面詞語統計
+        "person_a_senti_neg":"N/A",#第一個人負面詞語統計                   
+        "person_b_nickname":b_nick, #第二個人暱稱     
         "person_b_sentense":b ,#第二個人文句
+        "person_b_email": b_email ,#第二個人信箱
+        "person_b_senti_pos":"N/A",#第二個人正面詞語統計
+        "person_b_senti_neg":"N/A",#第二個人負面詞語統計                
         "similarity":"",#文章風格相似度
         "success_match":"N/A" #是否成功配對
     }
@@ -288,7 +443,12 @@ def sim(a,b,comb):
 
     result_senti_a  = senti.sentiment_count(cc.convert(a)) 
     result_senti_b  = senti.sentiment_count(cc.convert(b))   
-     
+
+    #正負面情緒結果儲存到s_dict 
+    s_dict["person_a_senti_pos"]=str(result_senti_a["pos"])
+    s_dict["person_a_senti_neg"]=str(result_senti_a["neg"])
+    s_dict["person_b_senti_pos"]=str(result_senti_b["pos"])
+    s_dict["person_b_senti_neg"]=str(result_senti_b["neg"])             
 
 
     a=process(a)
@@ -330,13 +490,18 @@ def sim(a,b,comb):
 
 #輸入欄位  key "input" 文字字串作為 php 文字框字典檔輸入欄位
 #相似度分析
-sim(in_a["NLP_input"],in_b["NLP_input"],'ab') # 輸出 ab_s_dict_sim_o.json
+sim(in_a["NLP_input"],in_a["nickname"],in_a["email"],in_b["NLP_input"],in_b["nickname"],in_b["email"],'ab') # 輸出 ab_s_dict_sim_o.json
 
 
 
 #情緒分析產生      
 w2np(in_a["NLP_input"],1)# 輸出 1_n_dict_output.json
 w2np(in_b["NLP_input"],2)# 輸出 2_n_dict_output.json
+
+
+    
+    
+    
 
 
     
